@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>گیف‌ساز | ساخت گیف از عکس و فیلم</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#eef0f6;--card:#fff;--ink:#181a2b;--mut:#666a85;--pri:#3d5afe;--hot:#ff5a36;--line:#dcdfec;--in:#f5f6fb}
+@media(prefers-color-scheme:dark){:root{--bg:#10111b;--card:#191b2a;--ink:#eceefb;--mut:#9a9eba;--line:#2c2f46;--in:#222540}}
+*{box-sizing:border-box}
+body{margin:0;font-family:Vazirmatn,Tahoma,sans-serif;background:var(--bg);color:var(--ink);line-height:1.7}
+.wrap{max-width:1040px;margin:0 auto;padding:16px}
+h1{font-size:1.9rem;font-weight:800;margin:8px 0 2px}
+h1 i{font-style:normal;color:var(--hot)}
+.sub{color:var(--mut);margin:0 0 16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px}
+.drop{display:block;border:2px dashed var(--pri);border-radius:16px;padding:44px 16px;text-align:center;cursor:pointer;background:var(--card)}
+.drop.over{background:var(--in)}
+.drop b{display:block;font-size:1.2rem}.drop span{color:var(--mut);font-size:.9rem}
+.drop input{display:none}
+#editor{display:none;grid-template-columns:1fr;gap:14px}
+@media(min-width:860px){#editor{grid-template-columns:1.1fr 1fr;align-items:start}}
+.stagebox{text-align:center}
+#stage{max-width:100%;max-height:62vh;border-radius:10px;background:#000;touch-action:none;cursor:move}
+.bar{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:10px}
+.tabs{display:flex;gap:4px;margin-bottom:12px;background:var(--in);padding:4px;border-radius:12px}
+.tab{flex:1;border:0;background:none;color:var(--mut);font:inherit;font-weight:600;padding:8px 2px;border-radius:9px;cursor:pointer}
+.tab.on{background:var(--card);color:var(--ink);box-shadow:0 1px 4px #0002}
+.panel{display:none}.panel.on{display:block}
+.r{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:9px 0;font-size:.92rem}
+.r span{flex:0 0 auto}.r input[type=range]{flex:1;accent-color:var(--pri)}
+.r b{min-width:34px;text-align:left;font-weight:600;color:var(--mut);font-size:.8rem}
+select,textarea,input[type=number],input[type=color]{font:inherit;background:var(--in);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:5px 8px}
+input[type=color]{padding:0;width:44px;height:30px}
+textarea{width:100%;resize:vertical;font-size:1rem}
+button{font:inherit;cursor:pointer;border:1px solid var(--line);background:var(--in);color:var(--ink);border-radius:10px;padding:7px 12px}
+button:focus-visible,.tab:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--pri);outline-offset:2px}
+button.pri{background:var(--hot);border-color:var(--hot);color:#fff;font-weight:800;width:100%;padding:11px;font-size:1.05rem}
+button:disabled{opacity:.5;cursor:wait}
+.btns{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chips button.on{background:var(--pri);color:#fff;border-color:var(--pri)}
+.hint{color:var(--mut);font-size:.82rem;margin:6px 0}
+progress{width:100%;height:10px;accent-color:var(--pri);display:none;margin-top:10px}
+#res{display:none;text-align:center;margin-top:12px}
+#res img{max-width:100%;border-radius:10px}
+#res a{display:inline-block;margin-top:8px;background:var(--pri);color:#fff;text-decoration:none;padding:9px 18px;border-radius:10px;font-weight:700}
+footer{color:var(--mut);font-size:.82rem;text-align:center;margin:18px 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>گیف<i>‌ساز</i></h1>
+<p class="sub">عکس یا فیلمت رو بذار، ویرایشش کن، متن فارسی بنویس و گیف بگیر.</p>
+
+<label class="drop" id="drop">
+<b>عکس یا فیلم رو اینجا بنداز یا لمس کن</b>
+<span>چند عکس انتخاب کنی، اسلایدشو ساخته می‌شه. فایل‌ها روی دستگاه خودت پردازش می‌شن و آپلود نمی‌شن</span>
+<input type="file" id="file" accept="image/*,video/*" multiple>
+</label>
+<div style="text-align:center;margin:10px 0"><button type="button" id="pload0">📂 باز کردن پروژه‌ی ذخیره‌شده</button></div>
+
+<div id="editor">
+<div class="card stagebox">
+<canvas id="stage"></canvas>
+<div class="bar">
+<button id="undo" disabled>↶ بازگشت</button><button id="redo" disabled>↷ جلو</button><button id="psave">💾 ذخیره پروژه</button><button id="pload">📂 باز کردن پروژه</button><input type="file" id="pfile" accept=".json,application/json" hidden>
+<button id="play" style="display:none">▶ پخش</button>
+<button id="png">ذخیره این کادر (PNG)</button>
+<button id="change">انتخاب فایل دیگر</button>
+</div>
+</div>
+<div class="card">
+<div class="tabs" role="tablist">
+<button class="tab on" data-p="crop">✂️ برش</button>
+<button class="tab" data-p="filt">🎨 فیلتر</button>
+<button class="tab" data-p="text">🔤 متن</button>
+<button class="tab" data-p="gif">🎞️ گیف</button>
+</div>
+<div class="panel on" id="p-crop"></div>
+<div class="panel" id="p-filt"></div>
+<div class="panel" id="p-text"></div>
+<div class="panel" id="p-gif"></div>
+</div>
+</div>
+<footer>همه‌چیز داخل مرورگر انجام می‌شه. فونت‌ها از Google Fonts لود می‌شن.</footer>
+</div>
+
+<script>
+const $=s=>document.querySelector(s),clamp=(v,a=0,b=1)=>Math.min(b,Math.max(a,v));
+const S={kind:null,sw:0,sh:0,rot:0,fh:0,fv:0,ar:'orig',zoom:1,px:0,py:0,outW:480,
+ f:{b:100,c:100,s:100,h:0,bl:0,g:0,se:0},texts:[],sel:-1,start:0,end:1,speed:1,mode:'fwd',fps:12,loop:0,fx:'none',dur:2};
+const cv=$('#stage'),ctx=cv.getContext('2d',{willReadFrequently:true});
+let vid=null,img=null,busy=false;
+const sl=(id,l,mn,mx,st,v)=>`<label class="r"><span>${l}</span><input type="range" id="${id}" min="${mn}" max="${mx}" step="${st}" value="${v}"><b id="${id}_v">${v}</b></label>`;
+const FL=[['b','روشنایی',0,200,100],['c','کنتراست',0,200,100],['s','اشباع رنگ',0,300,100],['h','چرخش رنگ',0,360,0],['bl','محو',0,10,0],['g','سیاه‌وسفید',0,100,0],['se','رنگ قدیمی',0,100,0]];
+const PRE={'اصلی':{},'سیاه‌وسفید':{g:100,c:110},'قدیمی':{se:70,c:110,b:95},'پرانرژی':{s:170,c:115},'رویایی':{bl:1,b:110,s:130}};
+
+$('#p-crop').innerHTML=`
+<div class="r"><span>نسبت تصویر</span><select id="ar"><option value="orig">اصلی</option><option value="1">۱:۱</option><option value="1.7778">۱۶:۹</option><option value="0.5625">۹:۱۶</option><option value="1.3333">۴:۳</option><option value="" id="arc" hidden>برش دستی</option></select></div>
+<div class="r"><span>عرض خروجی</span><select id="ow"><option>240</option><option>320</option><option selected>480</option><option>640</option><option>800</option></select></div>
+${sl('zoom','بزرگ‌نمایی',.25,10,.01,1)}${sl('px','جابه‌جایی افقی',-3,3,.01,0)}${sl('py','جابه‌جایی عمودی',-3,3,.01,0)}
+<div class="btns"><button id="cm">✂️ برش دستی روی تصویر</button><button id="cok" style="display:none">✔ اعمال برش</button><button id="cx" style="display:none">انصراف</button><button id="crst">بازنشانی برش</button></div><p class="hint" id="chint"></p>
+<div class="btns"><button id="rl">⟲ چرخش</button><button id="rr">⟳ چرخش</button><button id="fh">↔ آینه افقی</button><button id="fv">↕ آینه عمودی</button></div>`;
+$('#p-filt').innerHTML=`<div class="btns">${Object.keys(PRE).map(k=>`<button data-pre="${k}">${k}</button>`).join('')}</div>`+FL.map(a=>sl('f_'+a[0],a[1],a[2],a[3],a[0]=='bl'?.5:1,a[4])).join('');
+$('#p-text').innerHTML=`<div id="chips" class="chips"></div>
+<div class="btns"><button id="addt">+ متن جدید</button><button id="delt">🗑 حذف این متن</button></div>
+<textarea id="tx" rows="2" placeholder="متن فارسی رو بنویس..."></textarea>
+<div class="r"><span>فونت</span><select id="tf"></select></div>
+${sl('tsize','اندازه',3,30,.5,8)}
+<div class="r"><span>ضخامت خط</span><select id="tw"><option value="400">معمولی</option><option value="600">نیمه‌ضخیم</option><option value="800" selected>ضخیم</option></select></div>
+<div class="r"><span>رنگ متن</span><input type="color" id="tc" value="#ffffff"></div>
+<div class="r"><span>رنگ دورخط</span><input type="color" id="tsc" value="#000000"></div>
+${sl('tsw','ضخامت دورخط',0,10,.5,3)}
+<div class="r"><label><input type="checkbox" id="tbg"> پس‌زمینه پشت متن</label><input type="color" id="tbgc" value="#000000"></div>
+${sl('tpx','موقعیت افقی',0,1,.005,.5)}${sl('tpy','موقعیت عمودی',0,1,.005,.85)}
+<div class="r"><span>انیمیشن متن</span><select id="tan"><option value="none">بدون انیمیشن</option><option value="fade">ظاهر شدن تدریجی</option><option value="blink">چشمک</option><option value="bounce">بالا و پایین</option><option value="pulse">ضربان</option></select></div>
+${sl('tt0','شروع نمایش (٪ از گیف)',0,99,1,0)}${sl('tt1','پایان نمایش (٪ از گیف)',1,100,1,100)}
+<div class="r"><span>ایموجی</span></div><div class="btns" id="emo">${['😂','❤️','🔥','😍','👍','✨','🎉','😎'].map(e=>`<button>${e}</button>`).join('')}</div>
+<p class="hint">متن رو می‌تونی مستقیم روی تصویر بکشی. همه‌ی متن‌ها با وزیرمتن نوشته می‌شن.</p>`;
+$('#p-gif').innerHTML=`<div id="vopts">${sl('st','شروع (ثانیه)',0,10,.1,0)}${sl('en','پایان (ثانیه)',0,10,.1,5)}
+<div class="r"><span>سرعت</span><select id="sp"><option value="0.5">۰.۵×</option><option value="1" selected>۱×</option><option value="1.5">۱.۵×</option><option value="2">۲×</option></select></div>
+<div class="r"><span>جهت پخش</span><select id="md"><option value="fwd">عادی</option><option value="rev">برعکس</option><option value="pp">رفت‌وبرگشت</option></select></div></div>
+<div id="iopts"><div class="r"><span>جلوه حرکتی</span><select id="fx"><option value="none">بدون حرکت</option><option value="zoom">زوم</option><option value="pulse">ضربان</option><option value="shake">لرزش</option><option value="pan">حرکت افقی</option></select></div>${sl('dur','مدت (ثانیه)',1,30,.5,2)}</div>
+<div class="r"><span>فریم در ثانیه</span><select id="fps"><option>8</option><option>10</option><option selected>12</option><option>15</option><option>20</option></select></div>
+<div class="r"><span>تکرار</span><select id="lp"><option value="0">همیشه</option><option value="1">یک بار</option></select></div>
+<div class="r"><span>بهینه‌سازی حجم</span><select id="qs"><option value="0">بدون افت کیفیت</option><option value="6" selected>متعادل</option><option value="12">کم‌حجم</option></select></div><div class="r"><span>حداکثر حجم (مگابایت)</span><input type="number" id="tgt" min="0" step=".1" value="0" style="width:80px"></div>
+<div class="r"><label><input type="checkbox" id="dth" checked> کیفیت بهتر رنگ (دیترینگ)</label></div><button class="pri" id="go">ساخت گیف</button><progress id="prog" max="1" value="0"></progress>
+<div id="res"><img id="rimg" alt="گیف ساخته‌شده"><br><span id="rsz" class="hint"></span><br><a id="dl" download="my-gif.gif">دانلود گیف</a></div>`;
+
+const FONTS=[
+['فارسی و عربی','Vazirmatn','وزیرمتن','Vazirmatn:wght@400;600;800'],['فارسی و عربی','Lalezar','لاله‌زار','Lalezar'],['فارسی و عربی','Amiri','امیری','Amiri:wght@400;700'],
+['فارسی و عربی','Noto Naskh Arabic','نسخ','Noto+Naskh+Arabic:wght@400;700'],['فارسی و عربی','Noto Nastaliq Urdu','نستعلیق','Noto+Nastaliq+Urdu:wght@400;700',2.2],
+['فارسی و عربی','Aref Ruqaa','رقعه','Aref+Ruqaa:wght@400;700',1.7],['فارسی و عربی','Reem Kufi','کوفی','Reem+Kufi:wght@400;700'],['فارسی و عربی','Cairo','کایرو','Cairo:wght@400;700;900'],
+['فارسی و عربی','Changa','چانگا','Changa:wght@400;700'],['فارسی و عربی','Rakkas','رکاس','Rakkas'],['فارسی و عربی','Katibeh','کاتبه','Katibeh'],
+['انگلیسی','Anton','Anton','Anton'],['انگلیسی','Bebas Neue','Bebas Neue','Bebas+Neue'],['انگلیسی','Oswald','Oswald','Oswald:wght@400;700'],['انگلیسی','Montserrat','Montserrat','Montserrat:wght@400;700;900'],
+['انگلیسی','Poppins','Poppins','Poppins:wght@400;700;900'],['انگلیسی','Playfair Display','Playfair Display','Playfair+Display:wght@400;700;900'],['انگلیسی','Pacifico','Pacifico','Pacifico'],
+['انگلیسی','Lobster','Lobster','Lobster'],['انگلیسی','Permanent Marker','Permanent Marker','Permanent+Marker'],['انگلیسی','Bangers','Bangers','Bangers']
+].map(([g,f,n,u,k])=>({g,f,n,u,k:k||1.5}));
+const FK={},cssDone={Vazirmatn:Promise.resolve()};FONTS.forEach(f=>FK[f.f]=f.k);
+$('#tf').innerHTML=['فارسی و عربی','انگلیسی'].map(g=>`<optgroup label="${g}">${FONTS.filter(f=>f.g==g).map(f=>`<option value="${f.f}">${f.n}</option>`).join('')}</optgroup>`).join('');
+function loadFont(t){ /* هر فونت فقط وقتی انتخاب بشه لود می‌شه */
+ const F=FONTS.find(f=>f.f==t.ff);if(!F)return Promise.resolve();
+ if(!cssDone[F.f])cssDone[F.f]=new Promise(r=>{const l=document.createElement('link');l.rel='stylesheet';l.href='https://fonts.googleapis.com/css2?family='+F.u+'&display=swap';l.onload=l.onerror=r;document.head.appendChild(l)});
+ return cssDone[F.f].then(()=>document.fonts.load(`${t.w} 40px "${F.f}"`,t.text+' سلام Abc')).catch(()=>{});
+}
+document.addEventListener('input',e=>{const o=document.getElementById(e.target.id+'_v');if(o)o.textContent=e.target.value});
+document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tab,.panel').forEach(x=>x.classList.remove('on'));b.classList.add('on');$('#p-'+b.dataset.p).classList.add('on')});
+Promise.all([400,600,800].map(w=>document.fonts.load(w+' 40px Vazirmatn','سلام فارسی')));
+
+/* ---------- load ---------- */
+const file=$('#file'),drop=$('#drop');
+file.onchange=()=>{load([...file.files]);file.value=''};
+$('#change').onclick=()=>file.click();
+['dragover','dragenter'].forEach(n=>addEventListener(n,e=>{e.preventDefault();drop.classList.add('over')}));
+['dragleave','drop'].forEach(n=>addEventListener(n,e=>{e.preventDefault();drop.classList.remove('over')}));
+addEventListener('drop',e=>load([...e.dataTransfer.files]));
+function load(list){
+ const f=list[0];if(!f)return;
+ const ims=list.filter(x=>x.type.startsWith('image/'));
+ if(f.type.startsWith('image/')&&ims.length>1){
+  Promise.all(ims.map(x=>new Promise(r=>{const i=new Image();i.onload=()=>r(i);i.src=URL.createObjectURL(x)}))).then(a=>{
+   if(vid)vid.pause();vid=null;S.imgs=a;img=a[0];S.kind='image';S.sw=img.naturalWidth;S.sh=img.naturalHeight;
+   S.dur=Math.min(30,a.length*1.5);$('#dur').value=S.dur;$('#dur_v').textContent=S.dur;ready()});return}
+ S.imgs=null;const url=URL.createObjectURL(f);
+ if(f.type.startsWith('video/')){
+  const v=document.createElement('video');v.muted=true;v.playsInline=true;v.preload='auto';
+  v.onloadedmetadata=()=>{if(vid)vid.pause();vid=v;img=null;S.kind='video';S.sw=v.videoWidth;S.sh=v.videoHeight;
+   S.start=0;S.end=Math.min(v.duration,5);['st','en'].forEach(i=>{$('#'+i).max=v.duration});
+   $('#st').value=0;$('#en').value=S.end;$('#st_v').textContent=0;$('#en_v').textContent=S.end.toFixed(1);ready()};
+  v.onerror=()=>alert('این فیلم توی مرورگر باز نشد. فرمت MP4 رو امتحان کن.');
+  v.src=url;
+ }else if(f.type.startsWith('image/')){
+  const i=new Image();i.onload=()=>{img=i;if(vid)vid.pause();vid=null;S.kind='image';S.sw=i.naturalWidth;S.sh=i.naturalHeight;ready()};i.src=url;
+ }else alert('فقط عکس یا فیلم قبول می‌شه.');
+}
+function ready(){
+ S.rot=S.fh=S.fv=0;S.zoom=1;S.px=S.py=0;['zoom','px','py'].forEach(i=>{$('#'+i).value=i=='zoom'?1:0;$('#'+i+'_v').textContent=i=='zoom'?1:0});
+ S.outW=Math.min(+$('#ow').value,S.sw>=240?800:480);
+ drop.style.display='none';$('#editor').style.display='grid';
+ $('#vopts').style.display=$('#play').style.display=S.kind=='video'?'':'none';
+ $('#iopts').style.display=S.kind=='image'?'':'none';
+ $('#res').style.display='none';
+ if(!S.texts.length)addText('متن شما');
+ size();$('#pload0').style.display='none';
+ if(pending){applyObj(pending);pending=null}
+ histReset();
+}
+function size(){
+ const r=S.rot%180,ew=r?S.sh:S.sw,eh=r?S.sw:S.sh,ar=S.ar=='orig'?ew/eh:+S.ar;
+ cv.width=S.outW;cv.height=Math.round(S.outW/ar);
+}
+
+/* ---------- drawing ---------- */
+function draw(p=0,prev=false){
+ const src=S.imgs?S.imgs[Math.min(S.imgs.length-1,Math.floor(p*S.imgs.length))]:(vid||img),iw=src.naturalWidth||S.sw,ih=src.naturalHeight||S.sh;
+ const W=cv.width,H=cv.height,r=S.rot%180,ew=r?ih:iw,eh=r?iw:ih;
+ let z=1,dx=0,dy=0;
+ if(S.kind=='image'&&!S.cropMode){
+  if(S.fx=='zoom')z=1+.3*p;else if(S.fx=='pulse')z=1+.08*Math.sin(p*6.2832);
+  else if(S.fx=='shake'){z=1.05;dx=Math.sin(p*37.7)*.01;dy=Math.cos(p*31.4)*.01}
+  else if(S.fx=='pan'){z=1.25;dx=(p-.5)*.2}
+ }
+ ctx.save();ctx.fillStyle='#000';ctx.fillRect(0,0,W,H);
+ const F=S.f,nat=ctx.filter!==undefined;
+ if(nat)ctx.filter=`brightness(${F.b}%) contrast(${F.c}%) saturate(${F.s}%) hue-rotate(${F.h}deg) blur(${F.bl}px) grayscale(${F.g}%) sepia(${F.se}%)`;
+ ctx.translate(W/2+(S.px+dx)*W,H/2+(S.py+dy)*H);
+ const k=Math.max(W/ew,H/eh)*S.zoom*z;
+ ctx.scale(k,k);ctx.rotate(S.rot*Math.PI/180);ctx.scale(S.fh?-1:1,S.fv?-1:1);
+ ctx.drawImage(src,-iw/2,-ih/2,iw,ih);
+ ctx.restore();
+ if(!nat)pixFilter();
+ S.texts.forEach(t=>drawText(t,p));
+ if(prev&&S.cropMode){ctx.save();ctx.fillStyle='#0009';ctx.beginPath();ctx.rect(0,0,W,H);
+  if(crop){const x=Math.min(crop.a[0],crop.b[0]),y=Math.min(crop.a[1],crop.b[1]),w=Math.abs(crop.a[0]-crop.b[0]),h=Math.abs(crop.a[1]-crop.b[1]);ctx.rect(x,y,w,h);ctx.fill('evenodd');ctx.setLineDash([6,4]);ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.strokeRect(x,y,w,h)}else ctx.fill();ctx.restore()}
+ if(prev&&!S.cropMode&&S.texts[S.sel]&&S.texts[S.sel]._b){const b=S.texts[S.sel]._b;ctx.save();ctx.setLineDash([6,4]);ctx.strokeStyle='#3d5afe';ctx.lineWidth=2;ctx.strokeRect(b.x-8,b.y-8,b.w+16,b.h+16);ctx.restore()}
+}
+function pixFilter(){ /* جایگزین برای مرورگرهایی که ctx.filter ندارن (مثل سافاری) */
+ const F=S.f;if(F.b==100&&F.c==100&&F.s==100&&!F.g)return;
+ const d=ctx.getImageData(0,0,cv.width,cv.height),a=d.data,b=F.b/100,c=F.c/100,s=F.s/100,g=F.g/100;
+ for(let i=0;i<a.length;i+=4){const l=.299*a[i]+.587*a[i+1]+.114*a[i+2];
+  for(let j=0;j<3;j++){let v=l+(a[i+j]-l)*s;v=((v-128)*c+128)*b;v=v+(l-v)*g;a[i+j]=v}}
+ ctx.putImageData(d,0,0);
+}
+function drawText(t,p){
+ const W=cv.width,lines=t.text.split('\n');let px=t.size/100*W;
+ ctx.save();ctx.direction='rtl';ctx.textAlign='center';ctx.textBaseline='middle';
+ const fnt=q=>ctx.font=`${t.w} ${q}px "${t.ff||'Vazirmatn'}",Vazirmatn,Tahoma,sans-serif`,mw=()=>Math.max(1,...lines.map(l=>ctx.measureText(l).width));
+ fnt(px);let w=mw();if(w>W*.92){px*=W*.92/w;fnt(px);w=mw()}
+ const lh=px*(FK[t.ff]||1.5),h=lh*lines.length,cx=t.x*W,cy=t.y*cv.height;
+ t._b={x:cx-w/2,y:cy-h/2,w,h};
+ const a=t.t0/100,b=t.t1/100;
+ if(p<a||p>b){ctx.restore();return}
+ let al=1,dy=0,sc=1;
+ if(t.an=='fade')al=clamp((p-a)/.15);
+ else if(t.an=='blink')al=Math.sin(p*37.7)>-.3?1:.1;
+ else if(t.an=='bounce')dy=-Math.abs(Math.sin(p*18.85))*.04*cv.height;
+ else if(t.an=='pulse')sc=1+.12*Math.sin(p*18.85);
+ ctx.translate(cx,cy+dy);ctx.scale(sc,sc);ctx.translate(-cx,-cy);
+ if(t.bg){ctx.globalAlpha=al*.65;ctx.fillStyle=t.bgc;ctx.beginPath();const bx=cx-w/2-px*.4,by=cy-h/2-px*.1,bw=w+px*.8,bh=h+px*.2;
+  ctx.roundRect?ctx.roundRect(bx,by,bw,bh,px*.3):ctx.rect(bx,by,bw,bh);ctx.fill()}
+ ctx.globalAlpha=al;
+ lines.forEach((l,i)=>{const y=cy-h/2+lh*(i+.5);
+  if(t.sw>0){ctx.lineWidth=t.sw*px/12;ctx.strokeStyle=t.sc;ctx.lineJoin='round';ctx.strokeText(l,cx,y)}
+  ctx.fillStyle=t.c;ctx.fillText(l,cx,y)});
+ ctx.restore();
+}
+function loop(){
+ if(S.kind&&!busy){let p=0;
+  if(S.kind=='video'){if(!vid.paused&&vid.currentTime>=S.end)vid.currentTime=S.start;p=(vid.currentTime-S.start)/Math.max(.1,S.end-S.start)}
+  else p=(performance.now()/(S.dur*1000))%1;
+  draw(p,true)}
+ requestAnimationFrame(loop);
+}
+loop();
+
+/* ---------- crop panel ---------- */
+$('#p-crop').oninput=()=>{S.ar=$('#ar').value;S.outW=+$('#ow').value;S.zoom=+$('#zoom').value;S.px=+$('#px').value;S.py=+$('#py').value;size()};
+$('#rl').onclick=()=>{S.rot=(S.rot+270)%360;size()};$('#rr').onclick=()=>{S.rot=(S.rot+90)%360;size()};
+$('#fh').onclick=()=>S.fh^=1;$('#fv').onclick=()=>S.fv^=1;
+$('#play').onclick=()=>{if(vid.paused){if(vid.currentTime<S.start||vid.currentTime>=S.end)vid.currentTime=S.start;vid.play()}else vid.pause();$('#play').textContent=vid.paused?'▶ پخش':'⏸ توقف'};
+$('#png').onclick=()=>{draw(0,false);const a=document.createElement('a');a.href=cv.toDataURL('image/png');a.download='frame.png';a.click()};
+
+/* ---------- filters ---------- */
+const syncF=()=>FL.forEach(([k])=>S.f[k]=+$('#f_'+k).value);
+$('#p-filt').oninput=syncF;
+document.querySelectorAll('[data-pre]').forEach(b=>b.onclick=()=>{FL.forEach(([k,,,,d])=>{const v=PRE[b.dataset.pre][k]??d;$('#f_'+k).value=v;$('#f_'+k+'_v').textContent=v});syncF()});
+
+/* ---------- text ---------- */
+function addText(txt){S.texts.push({text:txt,size:8,w:'800',c:'#ffffff',sc:'#000000',sw:3,bg:false,bgc:'#000000',x:.5,y:.85,an:'none',t0:0,t1:100,ff:'Vazirmatn'});S.sel=S.texts.length-1;loadFont(S.texts[S.sel]);syncText()}
+function chips(){$('#chips').innerHTML=S.texts.map((t,i)=>`<button data-i="${i}" class="${i==S.sel?'on':''}">${(t.text.split('\n')[0]||'…').slice(0,14)}</button>`).join('');
+ document.querySelectorAll('#chips button').forEach(b=>b.onclick=()=>{S.sel=+b.dataset.i;syncText()})}
+function syncText(){const t=S.texts[S.sel];chips();if(!t)return;
+ const m={tx:t.text,tsize:t.size,tw:t.w,tc:t.c,tsc:t.sc,tsw:t.sw,tbgc:t.bgc,tpx:t.x,tpy:t.y,tan:t.an,tt0:t.t0,tt1:t.t1,tf:t.ff||'Vazirmatn'};
+ for(const k in m){$('#'+k).value=m[k];const o=$('#'+k+'_v');if(o)o.textContent=m[k]}$('#tbg').checked=t.bg}
+$('#p-text').addEventListener('input',()=>{const t=S.texts[S.sel];if(!t)return;
+ t.text=$('#tx').value;t.size=+$('#tsize').value;t.w=$('#tw').value;t.c=$('#tc').value;t.sc=$('#tsc').value;t.sw=+$('#tsw').value;
+ t.bg=$('#tbg').checked;t.bgc=$('#tbgc').value;t.x=+$('#tpx').value;t.y=+$('#tpy').value;t.an=$('#tan').value;t.t0=+$('#tt0').value;t.t1=Math.max(+$('#tt1').value,t.t0+1);t.ff=$('#tf').value;loadFont(t);chips()});
+$('#addt').onclick=()=>addText('متن جدید');
+$('#delt').onclick=()=>{if(S.sel<0)return;S.texts.splice(S.sel,1);S.sel=S.texts.length-1;syncText()};
+$('#emo').onclick=e=>{if(e.target.tagName!='BUTTON')return;addText(e.target.textContent);const t=S.texts[S.sel];t.size=16;t.sw=0;t.y=.5;syncText()};
+let drag=null,crop=null;
+const cpt=e=>{const q=pt(e);return[clamp(q[0],0,cv.width),clamp(q[1],0,cv.height)]};
+const setSl=(id,v)=>{$('#'+id).value=v;$('#'+id+'_v').textContent=(+v).toFixed(2)};
+function cropUI(on){S.cropMode=on;crop=null;['cok','cx'].forEach(i=>$('#'+i).style.display=on?'':'none');$('#cm').style.display=on?'none':'';
+ $('#chint').textContent=on?'روی تصویر بکش تا ناحیه‌ی برش مشخص بشه، بعد «اعمال برش» رو بزن.':''}
+$('#cm').onclick=()=>cropUI(true);$('#cx').onclick=()=>cropUI(false);
+$('#crst').onclick=()=>{cropUI(false);S.ar='orig';$('#ar').value='orig';setSl('zoom',1);setSl('px',0);setSl('py',0);S.zoom=1;S.px=S.py=0;size()};
+$('#cok').onclick=()=>{
+ if(!crop)return cropUI(false);
+ const W=cv.width,H=cv.height,r=S.rot%180,ew=r?S.sh:S.sw,eh=r?S.sw:S.sh;
+ const x=Math.min(crop.a[0],crop.b[0]),y=Math.min(crop.a[1],crop.b[1]),w=Math.abs(crop.a[0]-crop.b[0]),h=Math.abs(crop.a[1]-crop.b[1]);
+ if(w<12||h<12)return cropUI(false);
+ const k0=Math.max(W/ew,H/eh)*S.zoom,dx=x+w/2-(W/2+S.px*W),dy=y+h/2-(H/2+S.py*H),H2=Math.round(W*h/w),k2=k0*W/w;
+ S.ar=String(w/h);$('#arc').value=S.ar;$('#ar').value=S.ar;
+ setSl('zoom',k2/Math.max(W/ew,H2/eh));setSl('px',-dx*k2/k0/W);setSl('py',-dy*k2/k0/H2);
+ S.zoom=+$('#zoom').value;S.px=+$('#px').value;S.py=+$('#py').value;size();cropUI(false)};
+const pt=e=>{const r=cv.getBoundingClientRect();return[(e.clientX-r.left)/r.width*cv.width,(e.clientY-r.top)/r.height*cv.height]};
+cv.onpointerdown=e=>{if(S.cropMode){const q=cpt(e);crop={a:q,b:q};drag='crop';cv.setPointerCapture(e.pointerId);return}
+ const[x,y]=pt(e);
+ for(let i=S.texts.length-1;i>=0;i--){const t=S.texts[i],b=t._b;
+  if(b&&x>b.x-24&&x<b.x+b.w+24&&y>b.y-24&&y<b.y+b.h+24){S.sel=i;drag=[x-t.x*cv.width,y-t.y*cv.height];cv.setPointerCapture(e.pointerId);syncText();return}}};
+cv.onpointermove=e=>{if(!drag)return;if(drag==='crop'){crop.b=cpt(e);return}
+ const[x,y]=pt(e),t=S.texts[S.sel];
+ t.x=clamp((x-drag[0])/cv.width);t.y=clamp((y-drag[1])/cv.height);
+ $('#tpx').value=t.x;$('#tpy').value=t.y;$('#tpx_v').textContent=t.x.toFixed(2);$('#tpy_v').textContent=t.y.toFixed(2)};
+cv.onpointerup=cv.onpointercancel=()=>drag=null;
+
+/* ---------- gif panel ---------- */
+$('#st').oninput=()=>{S.start=+$('#st').value;if(S.end<S.start+.2){S.end=Math.min(vid.duration,S.start+.2);$('#en').value=S.end;$('#en_v').textContent=S.end.toFixed(1)}vid.pause();vid.currentTime=S.start};
+$('#en').oninput=()=>{S.end=Math.max(+$('#en').value,S.start+.2);vid.pause();vid.currentTime=Math.max(S.start,S.end-.05)};
+$('#p-gif').addEventListener('input',()=>{S.speed=+$('#sp').value;S.mode=$('#md').value;S.fps=+$('#fps').value;S.loop=+$('#lp').value;S.fx=$('#fx').value;S.dur=+$('#dur').value});
+const seek=t=>new Promise(res=>{
+ if(Math.abs(vid.currentTime-t)<1e-3)return res();
+ const f=()=>{vid.removeEventListener('seeked',f);res()};vid.addEventListener('seeked',f);
+ vid.currentTime=Math.min(t,vid.duration-.001);setTimeout(f,2000)});
+$('#go').onclick=async()=>{
+ if(!S.kind)return;busy=true;$('#go').disabled=true;const pr=$('#prog');pr.style.display='block';pr.value=0;$('#res').style.display='none';
+ try{
+  await Promise.all(S.texts.map(loadFont));
+  const fr=[],fps=S.fps;let n,delay=Math.round(1000/fps);
+  if(S.kind=='video'){
+   vid.pause();$('#play').textContent='▶ پخش';
+   const step=S.speed/fps;n=Math.max(1,Math.floor((S.end-S.start)/step));
+   if(n>300){n=300;alert('برای سبک موندن گیف، فقط ۳۰۰ فریم اول ساخته می‌شه. بازه رو کوتاه‌تر یا فریم‌ریت رو کمتر کن.')}
+   for(let i=0;i<n;i++){await seek(S.start+i*step);draw(i/n);fr.push(ctx.getImageData(0,0,cv.width,cv.height));pr.value=i/n*.5}
+  }else{
+   n=S.fx=='none'&&!S.imgs?1:Math.round(S.dur*fps);if(n==1)delay=100;
+   for(let i=0;i<n;i++){draw(i/n);fr.push(ctx.getImageData(0,0,cv.width,cv.height));pr.value=i/n*.5;if(i%4==0)await tick()}
+  }
+  let seq=fr;if(S.mode=='rev')seq=[...fr].reverse();if(S.mode=='pp'&&fr.length>2)seq=fr.concat([...fr].reverse().slice(1,-1));
+  const dth=$('#dth').checked,onp=p=>pr.value=.5+p*.5,tgt=+$('#tgt').value*1e6;let tol=+$('#qs').value,seq2=seq,note='';
+  let blob=await runEnc(seq2,seq2[0].width,seq2[0].height,delay,S.loop,onp,dth,tol);
+  for(let k=0;tgt&&blob.size>tgt&&k<4;k++){const nf=scaleFrames(seq2,Math.max(.4,Math.sqrt(tgt/blob.size)*.92));if(nf[0].width<64)break;seq2=nf;tol=Math.max(tol,k>1?14:8);blob=await runEnc(seq2,seq2[0].width,seq2[0].height,delay,S.loop,onp,dth,tol)}
+  if(tgt&&blob.size>tgt)note=' (از حد خواسته‌شده بیشتره؛ بازه یا فریم‌ریت رو کم کن)';
+  const url=URL.createObjectURL(blob);$('#rimg').src=url;$('#dl').href=url;
+  $('#rsz').textContent=`حجم: ${blob.size>1e6?(blob.size/1e6).toFixed(1)+' مگابایت':Math.round(blob.size/1e3)+' کیلوبایت'} | ${seq2[0].width}×${seq2[0].height} | ${seq.length} فریم${note}`;
+  $('#res').style.display='block';$('#res').scrollIntoView({behavior:'smooth',block:'nearest'});
+ }catch(err){console.error(err);alert('ساخت گیف با خطا مواجه شد. عرض خروجی یا بازه رو کمتر کن.')}
+ finally{busy=false;$('#go').disabled=false;pr.style.display='none'}
+};
+
+/* ---------- Undo/Redo و ذخیره پروژه ---------- */
+const KEYS=['rot','fh','fv','ar','zoom','px','py','outW','f','texts','speed','mode','fps','loop','fx','dur','start','end'];
+const stateObj=()=>{const o={};KEYS.forEach(k=>o[k]=k=='texts'?S.texts.map(({_b,...t})=>t):S[k]);return o};
+let hist=[],hi=-1,tm=null,pending=null;
+function updUndo(){$('#undo').disabled=hi<1;$('#redo').disabled=hi>=hist.length-1}
+function snap(){if(!S.kind)return;const j=JSON.stringify(stateObj());if(j===hist[hi])return;hist=hist.slice(0,hi+1);hist.push(j);if(hist.length>80)hist.shift();hi=hist.length-1;updUndo()}
+function histReset(){hist=[];hi=-1;snap()}
+function applyObj(o){
+ cropUI(false);KEYS.forEach(k=>{if(k in o)S[k]=JSON.parse(JSON.stringify(o[k]))});
+ S.texts.forEach(t=>{if(!FONTS.some(f=>f.f==t.ff))t.ff='Vazirmatn'});S.sel=S.texts.length-1;
+ if(vid){S.end=Math.min(S.end,vid.duration);S.start=Math.max(0,Math.min(S.start,S.end-.2))}
+ size();syncAll();
+}
+function syncAll(){
+ $('#ow').value=S.outW;setSl('zoom',S.zoom);setSl('px',S.px);setSl('py',S.py);
+ const std=[...$('#ar').options].some(o=>o.id!='arc'&&o.value==S.ar);$('#arc').value=std?'':S.ar;$('#ar').value=S.ar;
+ FL.forEach(([k])=>{$('#f_'+k).value=S.f[k];$('#f_'+k+'_v').textContent=S.f[k]});
+ $('#sp').value=S.speed;$('#md').value=S.mode;$('#fps').value=S.fps;$('#lp').value=S.loop;$('#fx').value=S.fx;setSl('dur',S.dur);
+ if(vid){setSl('st',S.start);setSl('en',S.end)}
+ S.texts.forEach(loadFont);syncText();
+}
+function stepHist(d){clearTimeout(tm);snap();const n=hi+d;if(n<0||n>=hist.length)return;hi=n;applyObj(JSON.parse(hist[hi]));updUndo()}
+$('#undo').onclick=()=>stepHist(-1);$('#redo').onclick=()=>stepHist(1);
+addEventListener('keydown',e=>{if(!(e.ctrlKey||e.metaKey)||!S.kind)return;const t=e.target;if((t.tagName=='TEXTAREA'||t.tagName=='INPUT'&&t.type!='range'))return;
+ const k=e.key.toLowerCase();if(k=='z'){e.preventDefault();stepHist(e.shiftKey?1:-1)}else if(k=='y'){e.preventDefault();stepHist(1)}});
+['input','click','pointerup'].forEach(n=>$('#editor').addEventListener(n,e=>{if(e.target.id=='undo'||e.target.id=='redo')return;clearTimeout(tm);tm=setTimeout(snap,350)}));
+$('#psave').onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify({app:'gif-maker',v:1,...stateObj()})],{type:'application/json'}));a.download='gif-project.json';a.click()};
+const pf=$('#pfile');$('#pload').onclick=$('#pload0').onclick=()=>pf.click();
+pf.onchange=async()=>{const f=pf.files[0];pf.value='';if(!f)return;
+ try{const o=JSON.parse(await f.text());if(o.app!='gif-maker')throw 0;if(S.kind){applyObj(o);snap()}else{pending=o;alert('پروژه خونده شد. حالا همون عکس یا فیلم رو انتخاب کن.')}}
+ catch(e){alert('این فایل، پروژه‌ی معتبر گیف‌ساز نیست.')}};
+
+/* ---------- GIF encoder (با دیترینگ، داخل Worker) ---------- */
+const u16=n=>[n&255,n>>8];
+const tick=()=>new Promise(r=>setTimeout(r));
+async function encodeGIF(fr,w,h,delay,loop,onp,dither,tol=0){
+ const pts=[],step=Math.max(1,Math.floor(fr.length/8));
+ for(let f=0;f<fr.length;f+=step){const a=fr[f].data;for(let i=0;i<a.length;i+=52)pts.push([a[i],a[i+1],a[i+2]])}
+ let boxes=[pts];
+ while(boxes.length<255){
+  let bi=-1,bs=1;boxes.forEach((b,i)=>{if(b.length>bs){bs=b.length;bi=i}});if(bi<0)break;
+  const b=boxes[bi];let bc=0,br=-1;
+  for(let c=0;c<3;c++){let mn=255,mx=0;for(const p of b){if(p[c]<mn)mn=p[c];if(p[c]>mx)mx=p[c]}if(mx-mn>br){br=mx-mn;bc=c}}
+  b.sort((x,y)=>x[bc]-y[bc]);const m=b.length>>1;boxes.splice(bi,1,b.slice(0,m),b.slice(m));
+ }
+ const pal=new Uint8Array(768),nb=boxes.length;
+ boxes.forEach((b,i)=>{let r=0,g=0,bl=0;for(const p of b){r+=p[0];g+=p[1];bl+=p[2]}const n=b.length||1;pal[i*3]=r/n;pal[i*3+1]=g/n;pal[i*3+2]=bl/n});
+ const cache=new Int16Array(32768).fill(-1),cl=v=>v<0?0:v>255?255:v;
+ const BY=[0,8,2,10,12,4,14,6,3,11,1,9,15,7,13,5];
+ const near=(r,g,b)=>{const key=(r>>3<<10)|(g>>3<<5)|(b>>3);let c=cache[key];
+  if(c<0){const R=(r&248)+4,G=(g&248)+4,B=(b&248)+4;let bd=1e9;
+   for(let k=0;k<nb;k++){const dr=pal[k*3]-R,dg=pal[k*3+1]-G,db=pal[k*3+2]-B,d=dr*dr+dg*dg+db*db;if(d<bd){bd=d;c=k}}
+   cache[key]=c}
+  return c};
+ const parts=[new Uint8Array([71,73,70,56,57,97,...u16(w),...u16(h),0xF7,0,0]),pal,
+  new Uint8Array([0x21,0xFF,11,...[...'NETSCAPE2.0'].map(c=>c.charCodeAt(0)),3,1,...u16(loop),0])];
+ let prev=null,ref=null;const tol2=tol*tol;
+ for(let f=0;f<fr.length;f++){
+  const a=fr[f].data,idx=new Uint8Array(w*h);
+  if(dither){ /* دیترینگ منظم (Bayer)؛ برای حذف فریم‌های تکراری بهتر از انتشار خطا جواب می‌ده */
+   for(let y=0;y<h;y++)for(let x=0;x<w;x++){const i=(y*w+x)*4,o=(BY[(y&3)*4+(x&3)]-7.5)*1.6;
+    idx[y*w+x]=near(cl(a[i]+o)|0,cl(a[i+1]+o)|0,cl(a[i+2]+o)|0)}
+  }else for(let i=0,j=0;j<idx.length;i+=4,j++)idx[j]=near(a[i],a[i+1],a[i+2]);
+  let bx=0,by=0,bw=w,bh=h,sub=idx;
+  if(!prev){prev=idx.slice();ref=new Uint8Array(w*h*3);for(let j=0;j<w*h;j++){ref[j*3]=a[j*4];ref[j*3+1]=a[j*4+1];ref[j*3+2]=a[j*4+2]}}
+  else{
+   let x0=w,y0=h,x1=-1,y1=-1;
+   for(let y=0;y<h;y++)for(let x=0;x<w;x++){const j=y*w+x,c=idx[j],q=prev[j],i4=j*4,i3=j*3;let same=c==q;
+    if(!same&&tol>0){const dr=a[i4]-ref[i3],dg=a[i4+1]-ref[i3+1],db=a[i4+2]-ref[i3+2];same=dr*dr+dg*dg+db*db<=tol2}
+    if(same)idx[j]=255;else{prev[j]=c;ref[i3]=a[i4];ref[i3+1]=a[i4+1];ref[i3+2]=a[i4+2];if(x<x0)x0=x;if(x>x1)x1=x;if(y<y0)y0=y;if(y>y1)y1=y}}
+   if(x1<0){bw=bh=1;sub=new Uint8Array([255])}
+   else{bx=x0;by=y0;bw=x1-x0+1;bh=y1-y0+1;sub=new Uint8Array(bw*bh);for(let y=0;y<bh;y++)sub.set(idx.subarray((by+y)*w+bx,(by+y)*w+bx+bw),y*bw)}
+  }
+  parts.push(new Uint8Array([0x21,0xF9,4,5,...u16(Math.max(2,Math.round(delay/10))),255,0,0x2C,...u16(bx),...u16(by),...u16(bw),...u16(bh),0,8]),lzw(sub),new Uint8Array([0]));
+  onp((f+1)/fr.length);await tick();
+ }
+ parts.push(new Uint8Array([0x3B]));
+ return new Blob(parts,{type:'image/gif'});
+}
+function lzw(idx){
+ const out=[];let blk=[],cur=0,nbits=0,cs=9,nx=258;const dict=new Map();
+ const emit=c=>{cur|=c<<nbits;nbits+=cs;while(nbits>=8){blk.push(cur&255);cur>>>=8;nbits-=8;if(blk.length==255){out.push(255,...blk);blk=[]}}};
+ emit(256);let pre=idx[0];
+ for(let i=1;i<idx.length;i++){
+  const k=idx[i],key=(pre<<8)|k,v=dict.get(key);
+  if(v!==undefined){pre=v;continue}
+  emit(pre);
+  if(nx>(1<<cs)-1&&cs<12)cs++;
+  if(nx<4096)dict.set(key,nx++);else{emit(256);dict.clear();nx=258;cs=9}
+  pre=k;
+ }
+ emit(pre);emit(257);
+ if(nbits>0)blk.push(cur&255);
+ if(blk.length)out.push(blk.length,...blk);
+ return new Uint8Array(out);
+}
+function scaleFrames(seq,f){
+ const W0=seq[0].width,H0=seq[0].height,w=Math.round(W0*f),h=Math.round(H0*f),A=document.createElement('canvas'),B=document.createElement('canvas');
+ A.width=W0;A.height=H0;B.width=w;B.height=h;const a=A.getContext('2d'),b=B.getContext('2d',{willReadFrequently:true}),m=new Map();b.imageSmoothingQuality='high';
+ return seq.map(fr=>{if(!m.has(fr)){a.putImageData(fr,0,0);b.drawImage(A,0,0,w,h);m.set(fr,b.getImageData(0,0,w,h))}return m.get(fr)});
+}
+function makeWorker(){
+ const src=`const u16=${u16};const tick=${tick};const lzw=${lzw};const encodeGIF=${encodeGIF};
+onmessage=async e=>{const d=e.data;const blob=await encodeGIF(d.fr,d.w,d.h,d.delay,d.loop,p=>postMessage({p}),d.dither,d.tol);postMessage({blob})}`;
+ return new Worker(URL.createObjectURL(new Blob([src],{type:'text/javascript'})));
+}
+function runEnc(seq,w,h,delay,loop,onp,dither,tol){
+ return new Promise(async(res,rej)=>{
+  let wk;try{wk=makeWorker()}catch(e){return res(await encodeGIF(seq,w,h,delay,loop,onp,dither,tol))}
+  wk.onmessage=e=>{if(e.data.blob){wk.terminate();res(e.data.blob)}else onp(e.data.p)};
+  wk.onerror=async()=>{wk.terminate();try{res(await encodeGIF(seq,w,h,delay,loop,onp,dither,tol))}catch(x){rej(x)}};
+  wk.postMessage({fr:seq.map(f=>({data:f.data})),w,h,delay,loop,dither,tol});
+ });
+}
+</script>
+</body>
+</html>
